@@ -1,0 +1,202 @@
+@font-face {
+    font-family: 'Vazirmatn';
+    src: url('../fonts/vazirmatn/Vazirmatn-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Vazirmatn';
+    src: url('../fonts/vazirmatn/Vazirmatn-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Vazirmatn';
+    src: url('../fonts/vazirmatn/Vazirmatn-Bold.woff2') format('woff2');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+
+/* Reset و تنظیمات پایه */
+
+* {
+    font-family: 'Vazirmatn';
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+/* بدنه اصلی */
+
+.main-wrapper {
+    min-height: calc(100vh - 140px);
+    display: flex;
+}
+
+
+/* Header */
+
+.app-header {
+    background-color: #282a35;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+
+/* سایدبار */
+
+.sidebar {
+    height: 100%;
+    overflow-y: auto;
+    position: sticky;
+    top: 0;
+    background-color: #E7E9EB;
+    border-left: 1px solid #dee2e6;
+}
+
+
+/* استایل accordion سایدبار بدون border-radius و فاصله */
+
+.sidebar .accordion {
+    --bs-accordion-bg: transparent;
+    --bs-accordion-border-color: transparent;
+    --bs-accordion-border-radius: 0;
+    --bs-accordion-inner-border-radius: 0;
+}
+
+.sidebar .accordion-item {
+    border: none;
+    border-radius: 0;
+    margin: 0;
+}
+
+.sidebar .accordion-button {
+    background-color: transparent !important;
+    color: #000;
+    padding: 12px 16px;
+    border: none;
+    text-align: right;
+    border-radius: 0 !important;
+    margin: 0;
+    box-shadow: none !important;
+    width: 100%;
+    font-size: 1rem !important;
+}
+
+.sidebar .accordion-button:focus {
+    box-shadow: none !important;
+    border-color: transparent !important;
+}
+
+.sidebar .accordion-button:not(.collapsed) {
+    background-color: #d4d4d4 !important;
+    color: #000;
+}
+
+.sidebar .accordion-button:hover {
+    background-color: #d4d4d4 !important;
+}
+
+.sidebar .accordion-collapse {
+    border: none;
+}
+
+.sidebar .accordion-body {
+    padding: 0 !important;
+    background-color: transparent;
+}
+
+.sidebar .accordion-body .nav-link {
+    padding: 8px 16px 8px 32px;
+    color: #666;
+    border-bottom: 1px solid #f1f1f1;
+    border-radius: 0;
+    margin: 0;
+    text-decoration: none;
+    display: block;
+}
+
+.sidebar .accordion-body .nav-link:hover {
+    background-color: #d4d4d4;
+    color: #000;
+}
+
+.sidebar .accordion-body .nav-link:last-child {
+    border-bottom: none;
+}
+
+
+/* استایل برای زیرمنوی فعال (سبز W3Schools) */
+
+.sidebar .accordion-body .nav-link.active {
+    background-color: #04AA6D !important;
+    color: white !important;
+}
+
+
+/* استایل هاور برای زیرمنوی فعال */
+
+.sidebar .accordion-body .nav-link.active:hover {
+    background-color: #038857 !important;
+    color: white !important;
+}
+
+
+/* برای آیتم‌های ساده (غیر accordion) */
+
+.sidebar .accordion-header .nav-link {
+    padding: 12px 16px;
+    color: #000;
+    border-radius: 0;
+    margin: 0;
+    display: block;
+    text-decoration: none;
+}
+
+.sidebar .accordion-header .nav-link:hover {
+    background-color: #d4d4d4;
+    color: #000;
+}
+
+
+/* محتوای اصلی */
+
+.main-content {
+    flex: 1;
+    overflow-y: auto;
+    background-color: #ffffff;
+}
+
+.logo-img {
+    height: 40px;
+    max-width: 150px;
+    object-fit: contain;
+}
+
+
+/* responsive */
+
+@media (max-width: 767.98px) {
+    .sidebar {
+        position: static;
+        height: auto;
+    }
+    .main-wrapper {
+        min-height: auto;
+        flex-direction: column;
+    }
+}
+
+
+/* Footer */
+
+.app-footer {
+    background-color: #282a35;
+    margin-top: auto;
+}
