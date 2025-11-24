@@ -1,0 +1,81 @@
+{% extends "base.html" %} {% block content %}
+<div class="container">
+    <h2>📝 پر کردن فرم: {{ form.title }}</h2>
+
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                {% for col in structure.columns %}
+                                <th>
+                                    {{ col.name }} {% if col.required %}<span class="text-danger">*</span>{% endif %}
+                                    <br>
+                                    <small class="text-muted">{{ col.type }}</small>
+                                </th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row_index in range(structure.rows) %}
+                            <tr>
+                                <td class="fw-bold align-middle">{{ row_index + 1 }}</td>
+                                {% for col in structure.columns %} {% set col_index = loop.index0 %}
+                                <td>
+                                    {% set cell_value = structure.default_data[row_index][col_index] if structure.default_data and structure.default_data[row_index] else "" %} {% if col.editable_by_user %}
+                                    <!-- کاربر می‌تونه پر کنه -->
+                                    {% if col.type == 'text' %}
+                                    <input type="text" name="cell_{{ row_index }}_{{ col_index }}" class="form-control" value="{{ cell_value }}" {% if col.required %}required{% endif %}> {% elif col.type == 'number' %}
+                                    <input type="number" name="cell_{{ row_index }}_{{ col_index }}" class="form-control" value="{{ cell_value }}" {% if col.required %}required{% endif %}> {% elif col.type == 'date' %}
+                                    <input type="date" name="cell_{{ row_index }}_{{ col_index }}" class="form-control" value="{{ cell_value }}" {% if col.required %}required{% endif %}> {% elif col.type == 'select' %}
+                                    <select name="cell_{{ row_index }}_{{ col_index }}" class="form-select" {% if col.required %}required{% endif %}>
+                <option value="">انتخاب کنید</option>
+                {% for option in col.options %}
+                <option value="{{ option }}" {% if cell_value == option %}selected{% endif %}>
+                    {{ option }}
+                </option>
+                {% endfor %}
+            </select> {% elif col.type == 'radio' %}
+                                    <div class="radio-group">
+                                        {% for option in col.options %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="cell_{{ row_index }}_{{ col_index }}" value="{{ option }}" id="radio_{{ row_index }}_{{ col_index }}_{{ loop.index0 }}" {% if cell_value==option %}checked{% endif %} {% if col.required %}required{% endif
+                                                %}>
+                                            <label class="form-check-label" for="radio_{{ row_index }}_{{ col_index }}_{{ loop.index0 }}">
+                {{ option }}
+            </label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+
+                                    {% elif col.type == 'checkbox' %}
+                                    <div class="form-check">
+                                        <input type="checkbox" name="cell_{{ row_index }}_{{ col_index }}" value="true" class="form-check-input" {% if cell_value=='true' %}checked{% endif %}>
+                                        <label class="form-check-label">{{ col.checkbox_label }}</label>
+                                    </div>
+                                    {% endif %} {% else %}
+                                    <!-- فقط نمایش (غیرقابل ویرایش) -->
+                                    <span class="text-muted">{{ cell_value or '-' }}</span>
+                                    <input type="hidden" name="cell_{{ row_index }}_{{ col_index }}" value="{{ cell_value }}"> {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-success">ثبت پاسخ‌ها</button>
+                    <a href="/form/list" class="btn btn-secondary">انصراف</a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

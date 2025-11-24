@@ -1,0 +1,125 @@
+{% extends "base.html" %} {% block content %}
+<h2>📋 ایجاد فرم جدید (پیشرفته)</h2>
+
+<div class="card">
+    <div class="card-body">
+        <form id="formBuilder">
+            <div class="mb-3">
+                <label class="form-label">عنوان فرم</label>
+                <input type="text" name="title" class="form-control" required>
+            </div>
+
+            <h4>🏗️ ساختار ستون‌ها</h4>
+            <div id="columns-container">
+                <div class="column-item border p-3 mb-3 rounded">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <input type="text" name="column_name" placeholder="نام ستون" class="form-control" required>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="column_type" class="form-control" onchange="toggleOptions(this)">
+                                <option value="text">متن</option>
+                                <option value="number">عدد</option>
+                                <option value="date">تاریخ</option>
+                                <option value="select">لیست کشویی</option>
+                                <option value="radio">رادیو باتن</option>
+                                <option value="checkbox">تیک</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 options-container" style="display: none;">
+                            <input type="text" name="column_options" placeholder="گزینه‌ها (با کاما جدا کنید)" class="form-control">
+                        </div>
+                        <div class="col-md-2">
+                            <select name="editable_by_user" class="form-control">
+                                <option value="true">کاربر می‌تواند پر کند</option>
+                                <option value="false">فقط ایجادکننده</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="required">
+                                <label class="form-check-label">الزامی</label>
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-danger" onclick="removeColumn(this)">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-info mb-3" onclick="addColumn()">➕ افزودن ستون</button>
+            <br>
+            <button type="submit" class="btn btn-success">📦 ایجاد فرم</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleOptions(select) {
+        const type = select.value;
+        const optionsContainer = select.closest('.row').querySelector('.options-container');
+        optionsContainer.style.display = (type === 'select' || type === 'radio') ? 'block' : 'none';
+    }
+
+    function addColumn() {
+        const container = document.getElementById('columns-container');
+        const newColumn = container.firstElementChild.cloneNode(true);
+
+        // پاک کردن مقادیر
+        newColumn.querySelectorAll('input').forEach(input => {
+            if (input.type !== 'checkbox') input.value = '';
+            else input.checked = false;
+        });
+
+        container.appendChild(newColumn);
+    }
+
+    function removeColumn(button) {
+        if (document.querySelectorAll('.column-item').length > 1) {
+            button.closest('.column-item').remove();
+        }
+    }
+
+    document.getElementById('formBuilder').onsubmit = function(e) {
+        e.preventDefault();
+
+        const title = document.querySelector('[name="title"]').value;
+        const columns = [];
+
+        document.querySelectorAll('.column-item').forEach(columnEl => {
+            const column = {
+                name: columnEl.querySelector('[name="column_name"]').value,
+                type: columnEl.querySelector('[name="column_type"]').value,
+                editable_by_user: columnEl.querySelector('[name="editable_by_user"]').value === 'true',
+                required: columnEl.querySelector('[name="required"]').checked
+            };
+
+            // اضافه کردن گزینه‌ها برای select و radio
+            if (column.type === 'select' || column.type === 'radio') {
+                const optionsText = columnEl.querySelector('[name="column_options"]').value;
+                column.options = optionsText.split(',').map(opt => opt.trim()).filter(opt => opt);
+            }
+
+            columns.push(column);
+        });
+
+        const structure = JSON.stringify({
+            columns
+        });
+
+        // ارسال به سرور
+        fetch('/form/create_advanced', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `title=${encodeURIComponent(title)}&structure=${encodeURIComponent(structure)}`
+        }).then(response => {
+            if (response.ok) {
+                window.location.href = '/form/list';
+            }
+        });
+    };
+</script>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "base.html" %} {% block content %}
+<div class="container">
+    <h2>📊 پاسخ‌های فرم: {{ form.title }}</h2>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <strong>تعداد پاسخ‌ها:</strong> {{ responses|length }}
+                </div>
+                <div class="col-md-4">
+                    <strong>ساختار:</strong> {{ structure.rows }} سطر × {{ structure.columns|length }} ستون
+                </div>
+                <div class="col-md-4">
+                    <a href="/form/list" class="btn btn-secondary">← بازگشت به لیست</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if responses %} {% for response in responses %}
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">پاسخ {{ loop.index }}</h5>
+                <div>
+                    <span class="badge bg-primary">کاربر: {{ response.user.username }}</span>
+                    <span class="badge bg-secondary">{{ response.filled_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th width="50">#</th>
+                            {% for col in structure.columns %}
+                            <th>
+                                {{ col.name }}
+                                <br>
+                                <!--نشان دادن نوع داده-->
+                                <!--<small class="text-light">{{ col.type }}</small>-->
+                            </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row_index in range(structure.rows) %}
+                        <tr>
+                            <td class="fw-bold text-center">{{ row_index + 1 }}</td>
+                            {% for col_index in range(structure.columns|length) %}
+                            <td>
+                                {% set cell_key = 'cell_' ~ row_index ~ '_' ~ col_index %} {% set cell_value = response.data[cell_key] %} {% if cell_value %} {% if structure.columns[col_index].type == 'checkbox' %} {% if cell_value == 'true' %}
+                                <span class="badge bg-success">✓ {{ structure.columns[col_index].checkbox_label }}</span> {% else %}
+                                <span class="badge bg-secondary">✗ {{ structure.columns[col_index].checkbox_label }}</span> {% endif %} {% else %} {{ cell_value }} {% endif %} {% else %}
+                                <span class="text-muted">-</span> {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endfor %} {% else %}
+    <div class="alert alert-info text-center py-5">
+        <div class="mb-3">
+            <i class="fas fa-inbox fa-3x text-muted"></i>
+        </div>
+        <h4>هنوز پاسخی ثبت نشده</h4>
+        <p class="text-muted">هیچ کاربری تاکنون این فرم را پر نکرده است.</p>
+        <a href="/form/list" class="btn btn-primary mt-3">بازگشت به لیست فرم‌ها</a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .table th {
+        vertical-align: middle;
+        text-align: center;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .badge {
+        font-size: 0.75em;
+    }
+</style>
+{% endblock %}

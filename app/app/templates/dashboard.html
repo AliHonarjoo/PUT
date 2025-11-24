@@ -1,0 +1,25 @@
+{% extends "base.html" %} {% block content %}
+<div class="alert alert-success">
+    <h2>خوش آمدید {{ current_user.name }} عزیز!</h2>
+    <p>شما با موفقیت وارد سامانه شدید.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-body">
+                <h5>فرم‌های موجود</h5>
+                <h3>{{ forms|length if forms else 0 }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+                <h5>کاربران</h5>
+                <h3>{{ users|length if users else 0 }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

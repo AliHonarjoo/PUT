@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>سامانه فرم سازمانی</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+
+
+    <!-- CSS های سفارشی -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
+</head>
+
+<body class="app-container">
+    <!-- هدر -->
+    <header class="app-header text-white p-3">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <img src="{{ url_for('static', filename='uploads/light__logo.png') }}" alt="لوگو" class="logo-img" onerror="this.style.display='none'">
+
+            <div class="dropdown">
+                <a class="text-white dropdown-toggle text-decoration-none" data-bs-toggle="dropdown">
+                    {{ current_user.name }}
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">خروج</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- محتوای اصلی -->
+    <main class="app-main">
+        <div class="container-fluid main-wrapper">
+            <div class="row flex-grow-1">
+                <!-- سایدبار -->
+                <nav class="col-md-3 col-lg-2 sidebar p-0">
+                    <div class="pt-4">
+                        <div class="accordion" id="sidebarAccordion">
+                            {% if current_user.is_authenticated %}
+
+                            <!-- مدیریت کاربران -->
+                            {% if current_user.can_create_user and current_user.can_create_user() or current_user.can_edit_user and current_user.can_edit_user() %}
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#userCollapse">
+                        👥 مدیریت کاربران
+                    </button>
+                                </h2>
+                                <div id="userCollapse" class="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
+                                    <div class="accordion-body p-0">
+                                        {% if current_user.can_create_user and current_user.can_create_user() %}
+                                        <a class="nav-link" href="{{ url_for('user.create') }}" id="userCreate">➕ ایجاد کاربر</a> {% endif %} {% if current_user.can_edit_user and current_user.can_edit_user() %}
+                                        <a class="nav-link" href="{{ url_for('user.list') }}" id="userList">📋 لیست کاربران</a> {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- مدیریت فرم‌ها -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#formCollapse">
+                        📝 فرم‌ها
+                    </button>
+                                </h2>
+                                <div id="formCollapse" class="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
+                                    <div class="accordion-body p-0">
+                                        {% if current_user.can_create_form() %}
+                                        <a class="nav-link" href="{{ url_for('form.create_matrix') }}" id="formCreate">➕ ایجاد فرم</a> {% endif %} {% if current_user.can_edit_form() %}
+                                        <a class="nav-link" href="{{ url_for('form.list') }}" id="formList">📋 لیست فرم‌ها</a> {% endif %}
+                                        <a class="nav-link" href="/form/all_responses" id="formResponses">📋 فرم‌های پر شده</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- بقیه آیتم‌های ساده -->
+                            {% if current_user.can_manage_settings and current_user.can_manage_settings() %}
+                            <div class="accordion-item">
+                                <div class="accordion-header">
+                                    <a class="nav-link" href="{{ url_for('settings.logo') }}">⚙️ تنظیمات</a>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="accordion-item">
+                                <div class="accordion-header">
+                                    <a class="nav-link" href="{{ url_for('auth.logout') }}">🚪 خروج</a>
+                                </div>
+                            </div>
+
+                            {% else %}
+                            <div class="accordion-item">
+                                <div class="accordion-header">
+                                    <a class="nav-link" href="{{ url_for('auth.login') }}">🔐 ورود</a>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </nav>
+
+                <!-- محتوای اصلی -->
+                <section class="col-md-9 col-lg-10 main-content px-md-4 py-4">
+                    {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %} {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %} {% endif %} {% endwith %} {% block content %}{% endblock %}
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- فوتر -->
+    <footer class="app-footer text-white text-center p-3">
+        © ۱۴۰۴ سامانه مدیریت فرم‌های سازمانی
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        /**
+         * Auto-expand sidebar menu based on current page URL
+         * Maps URLs to their corresponding sidebar collapse elements
+         */
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuMap = {
+                '/user/create': {
+                    collapse: 'userCollapse',
+                    item: 'userCreate'
+                },
+                '/user/list': {
+                    collapse: 'userCollapse',
+                    item: 'userList'
+                },
+                '/form/create_matrix': {
+                    collapse: 'formCollapse',
+                    item: 'formCreate'
+                },
+                '/form/list': {
+                    collapse: 'formCollapse',
+                    item: 'formList'
+                },
+                '/form/all_responses': {
+                    collapse: 'formCollapse',
+                    item: 'formResponses'
+                }
+            };
+
+            const currentPath = window.location.pathname;
+            const menuData = menuMap[currentPath];
+
+            if (menuData) {
+                // باز کردن منوی اصلی
+                const menuElement = document.getElementById(menuData.collapse);
+                if (menuElement) {
+                    new bootstrap.Collapse(menuElement, {
+                        show: true
+                    });
+                }
+
+                // فعال کردن زیرمنو
+                const activeItem = document.getElementById(menuData.item);
+                if (activeItem) {
+                    activeItem.classList.add('active');
+                }
+            }
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

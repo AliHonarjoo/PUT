@@ -1,0 +1,279 @@
+{% extends "base.html" %} {% block content %}
+<div class="container">
+    <div id="form-data" data-form-id="{{ form.id }}" style="display: none;"></div>
+    <h2>🔐 مدیریت دسترسی فرم: {{ form.title }}</h2>
+
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="tab" href="#roleAccess">دسترسی گروهی (نقش‌ها)</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#userAccess">دسترسی فردی (کاربران)</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body">
+            <div class="tab-content">
+                <!-- دسترسی گروهی -->
+                <div class="tab-pane fade show active" id="roleAccess">
+                    <h5>تعیین دسترسی برای نقش‌ها</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>نقش</th>
+                                    <th>مشاهده</th>
+                                    <th>پر کردن</th>
+                                    <th>ویرایش</th>
+                                    <th>دسترسی کامل</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for role in roles %}
+                                <tr>
+                                    <td>{{ role.name }}</td>
+                                    <td><input type="checkbox" class="role-permission" data-role="{{ role.id }}" value="view"></td>
+                                    <td><input type="checkbox" class="role-permission" data-role="{{ role.id }}" value="fill"></td>
+                                    <td><input type="checkbox" class="role-permission" data-role="{{ role.id }}" value="edit"></td>
+                                    <td><input type="checkbox" class="role-permission-full" data-role="{{ role.id }}"></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-success save-role-access" data-role="{{ role.id }}">ذخیره</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- دسترسی فردی -->
+                <div class="tab-pane fade" id="userAccess">
+                    <h5>تعیین دسترسی برای کاربران خاص</h5>
+                    <div class="mb-3">
+                        <select class="form-select" id="userSelect">
+                            <option value="">انتخاب کاربر...</option>
+                            {% for user in users %}
+                            <option value="{{ user.id }}">{{ user.name }} ({{ user.username }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div id="userPermissions" style="display: none;">
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label class="form-check-label">
+                                    <input type="checkbox" class="user-permission" value="view"> مشاهده
+                                </label>
+                            </div>
+                            <div class="col">
+                                <label class="form-check-label">
+                                    <input type="checkbox" class="user-permission" value="fill"> پر کردن
+                                </label>
+                            </div>
+                            <div class="col">
+                                <label class="form-check-label">
+                                    <input type="checkbox" class="user-permission" value="edit"> ویرایش
+                                </label>
+                            </div>
+                            <div class="col">
+                                <label class="form-check-label">
+                                    <input type="checkbox" class="user-permission-full"> دسترسی کامل
+                                </label>
+                            </div>
+                        </div>
+                        <button class="btn btn-success" id="saveUserAccess">ذخیره دسترسی کاربر</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="/form/list" class="btn btn-secondary">← بازگشت به لیست فرم‌ها</a>
+    </div>
+</div>
+
+<script>
+    // JavaScript برای مدیریت دسترسی‌ها
+    /*document.addEventListener('DOMContentLoaded', function() {
+        const formId = {
+            {
+                form.id
+            }
+        };
+
+        // ذخیره دسترسی نقش
+        document.querySelectorAll('.save-role-access').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const roleId = this.dataset.role;
+                const permissions = [];
+
+                // جمع‌آوری permissions انتخاب شده
+                document.querySelectorAll('.role-permission[data-role="' + roleId + '"]:checked').forEach(cb => {
+                    permissions.push(cb.value);
+                });
+
+                // اگر دسترسی کامل انتخاب شده
+                if (document.querySelector('.role-permission-full[data-role="' + roleId + '"]:checked')) {
+                    permissions.push('full');
+                }
+
+                console.log('ارسال داده‌ها:', {
+                    formId,
+                    roleId,
+                    permissions
+                });
+
+                // ایجاد FormData برای ارسال
+                const formData = new FormData();
+                formData.append('form_id', formId);
+                formData.append('access_type', 'role');
+                formData.append('target_id', roleId);
+                permissions.forEach(perm => {
+                    formData.append('permissions', perm);
+                });
+
+                // ارسال به سرور
+                fetch('/form/access/save', {
+                        method: 'POST',
+                        body: formData
+                    }).then(response => response.json())
+                    .then(data => {
+                        console.log('پاسخ سرور:', data);
+                        if (data.success) {
+                            alert('✅ دسترسی با موفقیت ذخیره شد');
+                        } else {
+                            alert('❌ خطا در ذخیره دسترسی');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('خطا:', error);
+                        alert('❌ خطای شبکه');
+                    });
+            });
+        });
+
+        // نمایش فرم دسترسی کاربر
+        document.getElementById('userSelect').addEventListener('change', function() {
+            document.getElementById('userPermissions').style.display = this.value ? 'block' : 'none';
+        });
+
+        // منطق دسترسی کامل
+        document.querySelectorAll('.role-permission-full').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const roleId = this.dataset.role;
+                const otherCheckboxes = document.querySelectorAll('.role-permission[data-role="' + roleId + '"]');
+
+                if (this.checked) {
+                    otherCheckboxes.forEach(cb => {
+                        cb.checked = true;
+                        cb.disabled = true;
+                    });
+                } else {
+                    otherCheckboxes.forEach(cb => {
+                        cb.disabled = false;
+                    });
+                }
+            });
+        });
+    });*/
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('✅ JavaScript لود شد');
+
+        // خواندن از data attribute
+        var formDataElement = document.getElementById('form-data');
+        var formId = formDataElement ? formDataElement.getAttribute('data-form-id') : null;
+        console.log('🔍 فرم ID:', formId);
+
+        if (!formId) {
+            console.error('❌ formId پیدا نشد');
+            return;
+        }
+
+        // ذخیره دسترسی نقش
+        var saveButtons = document.querySelectorAll('.save-role-access');
+        for (var i = 0; i < saveButtons.length; i++) {
+            saveButtons[i].addEventListener('click', function() {
+                var roleId = this.getAttribute('data-role');
+                console.log('🔍 کلیک روی ذخیره برای نقش:', roleId);
+
+                var permissions = [];
+
+                // جمع‌آوری permissions
+                var checkboxes = document.querySelectorAll('.role-permission[data-role="' + roleId + '"]:checked');
+                for (var j = 0; j < checkboxes.length; j++) {
+                    permissions.push(checkboxes[j].value);
+                    console.log('✅ permission انتخاب شده:', checkboxes[j].value);
+                }
+
+                var fullAccess = document.querySelector('.role-permission-full[data-role="' + roleId + '"]:checked');
+                if (fullAccess) {
+                    permissions.push('full');
+                    console.log('✅ دسترسی کامل انتخاب شد');
+                }
+
+                console.log('📤 ارسال داده‌ها:', {
+                    formId: formId,
+                    roleId: roleId,
+                    permissions: permissions
+                });
+
+                if (permissions.length === 0) {
+                    alert('⚠️ لطفاً حداقل یک دسترسی انتخاب کنید');
+                    return;
+                }
+
+                // ارسال به سرور
+                var formData = new FormData();
+                formData.append('form_id', formId);
+                formData.append('access_type', 'role');
+                formData.append('target_id', roleId);
+                for (var k = 0; k < permissions.length; k++) {
+                    formData.append('permissions', permissions[k]);
+                }
+
+                console.log('🔄 ارسال درخواست به سرور...');
+
+                fetch('/form/access/save', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(function(response) {
+                        console.log('📥 وضعیت پاسخ:', response.status);
+                        return response.json();
+                    })
+                    .then(function(data) {
+                        console.log('📦 پاسخ سرور:', data);
+                        if (data.success) {
+                            alert('✅ دسترسی با موفقیت ذخیره شد');
+                        } else {
+                            alert('❌ خطا در ذخیره دسترسی: ' + (data.error || 'خطای ناشناخته'));
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error('❌ خطای شبکه:', error);
+                        alert('❌ خطای شبکه در ارتباط با سرور');
+                    });
+            });
+        }
+
+        // نمایش فرم دسترسی کاربر
+        var userSelect = document.getElementById('userSelect');
+        if (userSelect) {
+            userSelect.addEventListener('change', function() {
+                var userPermissions = document.getElementById('userPermissions');
+                if (userPermissions) {
+                    userPermissions.style.display = this.value ? 'block' : 'none';
+                }
+            });
+        }
+
+        console.log('✅ همه event listenerها تنظیم شدند');
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends "base.html" %} {% block content %}
+<div class="container">
+    <h2>📋 تمام فرم‌های پر شده</h2>
+
+    <!-- اطلاعات صفحه‌بندی -->
+    <div class="alert alert-info d-flex justify-content-between align-items-center">
+        <div>
+            نمایش <strong>{{ (page - 1) * per_page + 1 }}</strong> تا
+            <strong>{{ [page * per_page, total_responses] | min }}</strong> از
+            <strong>{{ total_responses }}</strong> پاسخ
+        </div>
+        <div>
+            صفحه <strong>{{ page }}</strong> از <strong>{{ total_pages }}</strong>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if responses %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>نام فرم</th>
+                            <th>کاربر پرکننده</th>
+                            <th>تاریخ پر شدن</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for response in responses %}
+                        <tr>
+                            <td>{{ (page - 1) * per_page + loop.index }}</td>
+                            <td>
+                                <strong>{{ response.form.title }}</strong>
+                                <br>
+                                <small class="text-muted">سازنده: {{ response.form.creator.username }}</small>
+                            </td>
+                            <td>
+                                {{ response.user.username }} {% if response.user.email %}
+                                <br>
+                                <small class="text-muted">{{ response.user.email }}</small> {% endif %}
+                            </td>
+                            <td>
+                                {{ response.filled_at.strftime('%Y-%m-%d') }}
+                                <br>
+                                <small class="text-muted">{{ response.filled_at.strftime('%H:%M') }}</small>
+                            </td>
+                            <td>
+                                <a href="/form/responses/{{ response.form.id }}?response_id={{ response.id }}" class="btn btn-sm btn-info">
+                                   👁️ مشاهده
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- صفحه‌بندی -->
+            {% if total_pages > 1 %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <!-- دکمه قبلی -->
+                    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                        <a class="page-link" href="?page={{ page - 1 }}">&laquo; قبلی</a>
+                    </li>
+
+                    <!-- صفحات -->
+		{% for p in range(1, total_pages + 1) %}
+			{% if p >= page - 2 and p<=page + 2 %}
+			<li class="page-item {% if p == page %}active{% endif %}">
+                        	<a class="page-link" href="?page={{ p }}">{{ p }}</a>
+                        </li>
+                        {% endif %}
+		{% endfor %}
+
+                        <!-- دکمه بعدی -->
+                        <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                            <a class="page-link" href="?page={{ page + 1 }}">بعدی &raquo;</a>
+                        </li>
+                </ul>
+            </nav>
+            {% endif %} {% else %}
+            <div class="text-center py-5">
+                <div class="mb-3">
+                    <i class="fas fa-file-alt fa-3x text-muted"></i>
+                </div>
+                <h4>هنوز فرم‌ای پر نشده</h4>
+                <p class="text-muted">هیچ فرم پر شده‌ای وجود ندارد.</p>
+                <a href="/form/list" class="btn btn-primary">مشاهده فرم‌ها</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .pagination .page-item.active .page-link {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+    
+    .pagination .page-link {
+        color: #007bff;
+    }
+    
+    .pagination .page-link:hover {
+        color: #0056b3;
+    }
+</style>
+{% endblock %}

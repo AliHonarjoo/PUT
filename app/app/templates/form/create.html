@@ -1,0 +1,72 @@
+{% extends "base.html" %} {% block content %}
+<h2>ایجاد فرم جدید</h2>
+<form method="POST" id="formBuilder">
+    <div class="mb-3">
+        <label>عنوان فرم</label>
+        <input type="text" name="title" class="form-control" required>
+    </div>
+
+    <div id="fields">
+        <div class="field-row mb-3 border p-3 rounded">
+            <div class="row">
+                <div class="col-md-3">
+                    <input type="text" name="label" placeholder="عنوان فیلد" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <select name="type" class="form-control">
+                        <option value="text">متن</option>
+                        <option value="number">عدد</option>
+                        <option value="date">تاریخ</option>
+                        <option value="checkbox">چک‌باکس</option>
+                        <option value="radio">رادیو</option>
+                        <option value="select">لیست کشویی</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" name="options" placeholder="گزینه‌ها (با کاما)" class="form-control">
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-danger" onclick="this.parentElement.parentElement.parentElement.remove()">حذف</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button type="button" class="btn btn-info mb-3" onclick="addField()">+ افزودن فیلد</button><br>
+    <button type="submit" class="btn btn-success">ایجاد فرم</button>
+</form>
+
+<script>
+    function addField() {
+        let container = document.getElementById('fields');
+        let row = container.firstElementChild.cloneNode(true);
+        row.querySelectorAll('input').forEach(i => i.value = '');
+        container.appendChild(row);
+    }
+
+    document.getElementById('formBuilder').onsubmit = function(e) {
+        e.preventDefault();
+        let fields = [];
+        document.querySelectorAll('.field-row').forEach(row => {
+            let label = row.querySelector('[name="label"]').value;
+            let type = row.querySelector('[name="type"]').value;
+            let options = row.querySelector('[name="options"]').value;
+            fields.push({
+                label,
+                type,
+                options: options.split(',').filter(o => o)
+            });
+        });
+        let structure = JSON.stringify(fields);
+        let title = document.querySelector('[name="title"]').value;
+
+        fetch('/form/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `title=${title}&structure=${encodeURIComponent(structure)}`
+        }).then(() => location.href = '/form/list');
+    };
+</script>
+{% endblock %}

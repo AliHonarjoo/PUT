@@ -1,0 +1,58 @@
+{% extends "base.html" %} {% block content %}
+<div class="container">
+    <h2>👁️ مشاهده فرم: {{ form.title }}</h2>
+
+    <div class="card">
+        <div class="card-header">
+            <h5>اطلاعات فرم</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>عنوان:</strong> {{ form.title }}</p>
+            <p><strong>تاریخ ایجاد:</strong> {{ form.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+            <p><strong>تعداد سطرها:</strong> {{ structure.rows }}</p>
+            <p><strong>تعداد ستون‌ها:</strong> {{ structure.columns|length }}</p>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>ساختار جدول</h5>
+        </div>
+        <div class="card-body">
+            {% if structure.columns %}
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            {% for col in structure.columns %}
+                            <th>
+                                <strong>{{ col.name }}</strong><br>
+                                <small class="text-muted">نوع: {{ col.type }}</small>
+                            </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in structure.default_data %}
+                        <tr>
+                            <td class="fw-bold">{{ loop.index }}</td>
+                            {% for cell in row %}
+                            <td>{{ cell or '-' }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted">هیچ ستونی تعریف نشده است.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="/form/list" class="btn btn-secondary">← بازگشت به لیست</a>
+    </div>
+</div>
+{% endblock %}

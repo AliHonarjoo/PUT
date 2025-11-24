@@ -1,0 +1,44 @@
+{% extends "base.html" %} {% block content %}
+<h2>📋 لیست فرم‌ها</h2>
+
+<div class="card">
+    <div class="card-body">
+        {% if forms %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>عنوان</th>
+                        <th>تاریخ ایجاد</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for form in forms %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ form.title }}</td>
+                        <td>
+                            {% if form.created_at %} {{ form.created_at.strftime('%Y-%m-%d %H:%M') }} {% else %} - {% endif %}
+                        </td>
+                        <td>
+                            <a href="/form/view/{{ form.id }}" class="btn btn-sm btn-info">مشاهده</a>
+                            <a href="/form/fill/{{ form.id }}" class="btn btn-sm btn-success">پر کردن</a> {% if form.created_by == current_user.id %}
+                            <a href="/form/responses/{{ form.id }}" class="btn btn-sm btn-warning">پاسخ‌ها</a> {% endif %}
+                            <a href="/form/access/{{ form.id }}" class="btn btn-sm btn-secondary">دسترسی‌ها</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <p class="text-muted">هنوز هیچ فرمی ایجاد نکرده‌اید.</p>
+            <a href="/form/create_matrix" class="btn btn-primary">ایجاد فرم جدید</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

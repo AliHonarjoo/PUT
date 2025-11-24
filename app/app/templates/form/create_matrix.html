@@ -1,0 +1,382 @@
+{% extends "base.html" %} {% block content %}
+<h2>📋 ایجاد فرم جدید (جدولی)</h2>
+
+<div class="card">
+    <div class="card-body" style="background-color: #f1f1f1;">
+        <form id="matrixFormBuilder">
+            <!-- CSRF Token-->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <!-- بخش تنظیمات جدول -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">عنوان فرم</label>
+                    <input type="text" name="title" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">تعداد سطرهای اولیه</label>
+                    <input type="number" name="rows" class="form-control" min="1" max="20" value="3" onchange="generateMatrix()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">تعداد ستون‌ها</label>
+                    <input type="number" name="columns" class="form-control" min="1" max="10" value="3" onchange="generateMatrix()">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="button" class="btn btn-primary w-100" onclick="generateMatrix()">ایجاد جدول</button>
+                </div>
+            </div>
+
+            <!-- جدول پویا -->
+            <div id="matrix-container" class="mb-4">
+                <p class="text-muted">لطفاً ابتدا تعداد سطر و ستون را انتخاب کنید</p>
+            </div>
+
+            <!-- دکمه اضافه کردن سطر -->
+            <div class="d-flex justify-content-between">
+                <button type="button" class="btn btn-success" onclick="addNewRow()">
+                    ➕ افزودن سطر جدید
+                </button>
+                <button type="submit" class="btn btn-primary">ایجاد فرم</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let currentRows = 0;
+    let currentCols = 0;
+
+    function generateMatrix() {
+        const rows = parseInt(document.querySelector('[name="rows"]').value);
+        const cols = parseInt(document.querySelector('[name="columns"]').value);
+        const container = document.getElementById('matrix-container');
+
+        if (rows < 1 || cols < 1) return;
+
+        currentRows = rows;
+        currentCols = cols;
+
+        let tableHTML = `
+            <h5>ساختار جدول</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+        `;
+
+        // ایجاد هدر ستون‌ها
+        for (let c = 0; c < cols; c++) {
+            tableHTML += `
+                <th>
+                    <input type="text" class="form-control form-control-sm" 
+                           name="col_${c}_name" placeholder="نام ستون ${c+1}" required>
+                    <select class="form-select form-select-sm mt-1" name="col_${c}_type" onchange="toggleColumnSettings(${c})">
+                        <option value="text">متن</option>
+                        <option value="number">عدد</option>
+                        <option value="date">تاریخ</option>
+                        <option value="select">لیست کشویی</option>
+                        <option value="radio">رادیو باتن</option>
+                        <option value="checkbox">تیک</option>
+                    </select>
+                    
+                    <!-- تنظیمات مخصوص چک‌باکس -->
+                    <div class="checkbox-setting mt-1" id="checkbox_${c}" style="display: none;">
+                        <input type="text" class="form-control form-control-sm" 
+                               name="col_${c}_checkbox_label" placeholder="عنوان چک‌باکس" value="تایید"
+                               onchange="updateColumnCells(${c})">
+                    </div>
+                    
+                    <!-- تنظیمات مخصوص select و radio -->
+                    <div class="options-setting mt-1" id="options_${c}" style="display: none;">
+                        <input type="text" class="form-control form-control-sm" 
+                               name="col_${c}_options" placeholder="گزینه‌ها (با کاما جدا کنید)" 
+                               onchange="updateColumnCells(${c})">
+                    </div>
+                    
+                    <select class="form-select form-select-sm mt-1" name="col_${c}_editable">
+                        <option value="true">کاربر پر می‌کند</option>
+                        <option value="false">فقط ایجادکننده</option>
+                    </select>
+                    <div class="form-check mt-1">
+                        <input class="form-check-input" type="checkbox" name="col_${c}_required">
+                        <label class="form-check-label">الزامی</label>
+                    </div>
+                </th>
+            `;
+        }
+
+        tableHTML += `<th>عملیات</th></tr></thead><tbody id="tableBody">`;
+
+        // ایجاد سطرهای اولیه
+        for (let r = 0; r < rows; r++) {
+            tableHTML += generateRowHTML(r, cols);
+        }
+
+        tableHTML += `</tbody></table></div>`;
+        container.innerHTML = tableHTML;
+    }
+
+    // ایجاد HTML یک سطر
+    function generateRowHTML(rowIndex, cols) {
+        let rowHTML = `<tr id="row_${rowIndex}"><td class="align-middle">${rowIndex + 1}</td>`;
+
+        for (let c = 0; c < cols; c++) {
+            rowHTML += `
+                <td id="cell_${rowIndex}_${c}">
+                    <input type="text" class="form-control form-control-sm cell-input" 
+                           name="cell_${rowIndex}_${c}" placeholder="مقدار پیش‌فرض" data-col="${c}">
+                </td>
+            `;
+        }
+
+        rowHTML += `
+            <td class="align-middle">
+                <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(${rowIndex})" ${rowIndex === 0 ? 'disabled' : ''}>
+                    حذف
+                </button>
+            </td>
+        </tr>`;
+
+        return rowHTML;
+    }
+
+    // اضافه کردن سطر جدید
+    function addNewRow() {
+        if (currentCols === 0) {
+            alert('لطفاً ابتدا جدول را ایجاد کنید!');
+            return;
+        }
+
+        const tbody = document.getElementById('tableBody');
+        const newRowIndex = currentRows;
+
+        tbody.innerHTML += generateRowHTML(newRowIndex, currentCols);
+        currentRows++;
+
+        // آپدیت تمام سلول‌های جدید بر اساس نوع ستون
+        for (let c = 0; c < currentCols; c++) {
+            const cell = document.getElementById(`cell_${newRowIndex}_${c}`);
+            const type = document.querySelector(`[name="col_${c}_type"]`).value;
+            updateCellInput(cell, type, c);
+        }
+
+        updateRowNumbers();
+    }
+
+    // حذف سطر
+    function removeRow(rowIndex) {
+        const row = document.getElementById(`row_${rowIndex}`);
+        if (row && currentRows > 1) {
+            row.remove();
+            currentRows--;
+            updateRowNumbers();
+        }
+    }
+
+    // آپدیت شماره سطرها
+    function updateRowNumbers() {
+        const rows = document.querySelectorAll('#tableBody tr');
+        rows.forEach((row, index) => {
+            const firstCell = row.cells[0];
+            const deleteButton = row.querySelector('button');
+
+            if (firstCell) {
+                firstCell.textContent = index + 1;
+            }
+
+            // غیرفعال کردن دکمه حذف برای سطر اول
+            if (deleteButton) {
+                deleteButton.disabled = index === 0;
+            }
+        });
+    }
+
+    function toggleColumnSettings(colIndex) {
+        const type = document.querySelector(`[name="col_${colIndex}_type"]`).value;
+
+        document.getElementById(`options_${colIndex}`).style.display =
+            (type === 'select' || type === 'radio') ? 'block' : 'none';
+
+        document.getElementById(`checkbox_${colIndex}`).style.display =
+            (type === 'checkbox') ? 'block' : 'none';
+
+        updateColumnCells(colIndex);
+    }
+
+    function updateColumnCells(colIndex) {
+        const type = document.querySelector(`[name="col_${colIndex}_type"]`).value;
+
+        for (let r = 0; r < currentRows; r++) {
+            const cell = document.getElementById(`cell_${r}_${colIndex}`);
+            if (cell) {
+                updateCellInput(cell, type, colIndex);
+            }
+        }
+    }
+
+    function updateCellInput(cell, type, colIndex) {
+        let inputHTML = '';
+        const [_, r, c] = cell.id.split('_');
+
+        switch (type) {
+            case 'text':
+                inputHTML = `<input type="text" class="form-control form-control-sm cell-input" name="cell_${r}_${c}" placeholder="متن وارد کنید" data-col="${c}">`;
+                break;
+
+            case 'number':
+                inputHTML = `<input type="number" class="form-control form-control-sm cell-input" name="cell_${r}_${c}" placeholder="عدد وارد کنید" data-col="${c}">`;
+                break;
+
+            case 'date':
+                inputHTML = `<input type="date" class="form-control form-control-sm cell-input" name="cell_${r}_${c}" data-col="${c}">`;
+                break;
+
+            case 'select':
+                const optionsText = document.querySelector(`[name="col_${colIndex}_options"]`).value;
+                const options = optionsText.split(',').map(opt => opt.trim()).filter(opt => opt);
+
+                inputHTML = `<select class="form-select form-select-sm cell-input" name="cell_${r}_${c}" data-col="${c}"><option value="">انتخاب کنید</option>`;
+                options.forEach(option => {
+                    inputHTML += `<option value="${option}">${option}</option>`;
+                });
+                inputHTML += `</select>`;
+                break;
+
+            case 'radio':
+                const radioOptions = document.querySelector(`[name="col_${colIndex}_options"]`).value;
+                const radioOptionsList = radioOptions.split(',').map(opt => opt.trim()).filter(opt => opt);
+
+                inputHTML = `<div class="radio-group">`;
+                radioOptionsList.forEach((option, index) => {
+                    inputHTML += `
+                        <div class="form-check">
+                            <input class="form-check-input cell-input" type="radio" name="cell_${r}_${c}" value="${option}" id="radio_${r}_${c}_${index}" data-col="${c}">
+                            <label class="form-check-label" for="radio_${r}_${c}_${index}">${option}</label>
+                        </div>
+                    `;
+                });
+                inputHTML += `</div>`;
+                break;
+
+            case 'checkbox':
+                const checkboxLabel = document.querySelector(`[name="col_${colIndex}_checkbox_label"]`).value || 'تایید';
+                inputHTML = `
+                    <div class="form-check">
+                        <input class="form-check-input cell-input" type="checkbox" name="cell_${r}_${c}" value="true" data-col="${c}">
+                        <label class="form-check-label">${checkboxLabel}</label>
+                    </div>
+                `;
+                break;
+        }
+
+        cell.innerHTML = inputHTML;
+    }
+
+    document.getElementById('matrixFormBuilder').onsubmit = function(e) {
+        e.preventDefault();
+
+        const title = document.querySelector('[name="title"]').value;
+        const cols = currentCols;
+
+        // ساختار ستون‌ها
+        const columns = [];
+        for (let c = 0; c < cols; c++) {
+            const column = {
+                name: document.querySelector(`[name="col_${c}_name"]`).value,
+                type: document.querySelector(`[name="col_${c}_type"]`).value,
+                editable_by_user: document.querySelector(`[name="col_${c}_editable"]`).value === 'true',
+                required: document.querySelector(`[name="col_${c}_required"]`).checked
+            };
+
+            if (column.type === 'select' || column.type === 'radio') {
+                const optionsText = document.querySelector(`[name="col_${c}_options"]`).value;
+                column.options = optionsText.split(',').map(opt => opt.trim()).filter(opt => opt);
+            }
+
+            if (column.type === 'checkbox') {
+                column.checkbox_label = document.querySelector(`[name="col_${c}_checkbox_label"]`).value || 'تایید';
+            }
+
+            columns.push(column);
+        }
+
+        // داده‌های پیش‌فرض سطرها
+        const defaultData = [];
+        for (let r = 0; r < currentRows; r++) {
+            const row = [];
+            for (let c = 0; c < cols; c++) {
+                const input = document.querySelector(`[name="cell_${r}_${c}"]`);
+                let value = '';
+
+                if (input) {
+                    if (input.type === 'checkbox') {
+                        value = input.checked ? 'true' : 'false';
+                    } else if (input.type === 'radio') {
+                        const selectedRadio = document.querySelector(`[name="cell_${r}_${c}"]:checked`);
+                        value = selectedRadio ? selectedRadio.value : '';
+                    } else {
+                        value = input.value;
+                    }
+                }
+
+                row.push(value);
+            }
+            defaultData.push(row);
+        }
+
+        const structure = JSON.stringify({
+            rows: currentRows,
+            columns: columns,
+            default_data: defaultData
+        });
+
+        // 🔥 برای دیباگ
+        console.log("📤 ارسال داده‌ها:", {
+            title,
+            structure
+        });
+
+        // ارسال به سرور
+        fetch('/form/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    title: title,
+                    structure: structure
+                })
+            }).then(response => {
+                console.log("📥 پاسخ سرور:", response.status);
+                if (response.ok) {
+                    window.location.href = '/form/list';
+                } else {
+                    alert('خطا در ایجاد فرم! لطفاً دوباره تلاش کنید.');
+                }
+            })
+            .catch(error => {
+                console.error('❌ خطا در ارسال:', error);
+                alert('خطا در ارتباط با سرور!');
+            });
+    };
+
+    // ایجاد جدول اولیه
+    generateMatrix();
+</script>
+
+<style>
+    .radio-group .form-check {
+        margin-bottom: 0.2rem;
+    }
+    
+    .radio-group .form-check-label {
+        font-size: 0.8rem;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+</style>
+{% endblock %}

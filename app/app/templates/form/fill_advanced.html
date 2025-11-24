@@ -1,0 +1,44 @@
+<!-- form/fill_advanced.html -->
+{% extends "base.html" %} {% block content %}
+<h2>📝 پر کردن فرم: {{ form.title }}</h2>
+
+<form method="POST">
+    {{ form.hidden_tag() }} {% set structure = form.get_structure() %}
+    <table class="table table-bordered">
+        <thead class="table-dark">
+            <tr>
+                {% for column in structure.columns %}
+                <th>{{ column.name }}{% if column.required %} *{% endif %}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                {% for column in structure.columns %}
+                <td>
+                    {% if column.editable_by_user or current_user.id == form.created_by %} {% if column.type == 'text' %}
+                    <input type="text" name="col_{{ loop.index0 }}" class="form-control" {% if column.required %}required{% endif %}> {% elif column.type == 'number' %}
+                    <input type="number" name="col_{{ loop.index0 }}" class="form-control" {% if column.required %}required{% endif %}> {% elif column.type == 'date' %}
+                    <input type="date" name="col_{{ loop.index0 }}" class="form-control" {% if column.required %}required{% endif %}> {% elif column.type == 'select' %}
+                    <select name="col_{{ loop.index0 }}" class="form-control" {% if column.required %}required{% endif %}>
+                                <option value="">انتخاب کنید</option>
+                                {% for option in column.options %}
+                                <option value="{{ option }}">{{ option }}</option>
+                                {% endfor %}
+                            </select> {% elif column.type == 'radio' %} {% for option in column.options %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="col_{{ loop.index0 }}" value="{{ option }}" {% if loop.first and column.required %}required{% endif %}>
+                        <label class="form-check-label">{{ option }}</label>
+                    </div>
+                    {% endfor %} {% elif column.type == 'checkbox' %}
+                    <input type="checkbox" name="col_{{ loop.index0 }}" value="true" class="form-check-input"> {% endif %} {% else %}
+                    <span class="text-muted">فقط ایجادکننده</span> {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+
+    <button type="submit" class="btn btn-success">💾 ذخیره داده‌ها</button>
+</form>
+{% endblock %}
